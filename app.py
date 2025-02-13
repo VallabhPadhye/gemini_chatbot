@@ -1,13 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
-import os
-from dotenv import load_dotenv
-
-# Load API key securely
-load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
 
 # Configure Gemini API
+api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-pro")
 
@@ -23,9 +18,18 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-user_input = st.text_input("You:")
+# Add chat input at the bottom with "Send" button
+with st.container():
+    user_input = st.text_area("Type your message:", key="chat_input", height=100)
 
-if user_input:
+    col1, col2 = st.columns([8, 2])
+    with col1:
+        st.write("")  # Empty space for layout
+    with col2:
+        send = st.button("Send")
+
+# Process input when the "Send" button is clicked
+if send and user_input.strip():
     with st.chat_message("user"):
         st.markdown(user_input)
 
@@ -36,6 +40,9 @@ if user_input:
     with st.chat_message("assistant"):
         st.markdown(bot_response)
 
-    # Store chat history in session state
+    # Store chat history
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
+
+    # Clear input after sending
+    st.session_state.chat_input = ""
