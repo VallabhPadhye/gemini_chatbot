@@ -61,15 +61,20 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
         st.caption(message.get("timestamp", ""))
 
-# Chat input section
-user_input = st.text_area(
-    "Type your message:",
-    height=80,
-    key="chat_input",
-    value="",
-    placeholder="Ask me anything...",
-)
-send = st.button("Send", use_container_width=True)
+# Chat input and send button layout
+col1, col2 = st.columns([8, 1])
+
+with col1:
+    user_input = st.text_area(
+        "Type your message:",
+        height=80,
+        key="chat_input",
+        value="",
+        placeholder="Ask me anything...",
+    )
+
+with col2:
+    send = st.button("Send", use_container_width=True)
 
 # Handle user input
 def handle_message():
@@ -95,8 +100,8 @@ def handle_message():
         st.session_state.messages.append({"role": "assistant", "content": bot_response, "timestamp": timestamp})
         st.session_state.chats[st.session_state.current_chat] = st.session_state.messages
 
-        # Clear input
-        st.session_state.chat_input = ""
+        # Clear input by refreshing the page
+        st.experimental_set_query_params(clear_input=True)
         st.rerun()
 
 # Call function only when send button is clicked
