@@ -6,7 +6,7 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-pro")
 
-# Initialize session state variables
+# ✅ Initialize session state variables properly
 if "chats" not in st.session_state:
     st.session_state.chats = {"Default": []}
 if "current_chat" not in st.session_state:
@@ -56,7 +56,7 @@ with col1:
 with col2:
     send = st.button("Send", use_container_width=True)
 
-# Process input when "Send" button is clicked
+# ✅ Process input when "Send" button is clicked
 if send and user_input.strip():
     with st.chat_message("user"):
         st.markdown(user_input)
@@ -71,11 +71,11 @@ if send and user_input.strip():
     with st.chat_message("assistant"):
         st.markdown(bot_response)
 
-    # Save chat history
+    # ✅ Save chat history before modifying session state
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
     st.session_state.chats[st.session_state.current_chat] = st.session_state.messages
 
-    # ✅ Correct way to clear input
-    st.session_state.chat_input = ""
+    # ✅ Correct way to clear input (Avoids Streamlit error)
+    st.session_state["chat_input"] = ""
     st.rerun()
