@@ -1,4 +1,3 @@
-
 import streamlit as st
 import google.generativeai as genai
 
@@ -17,15 +16,13 @@ def init_session_state():
         st.session_state.pinned_chat = "Default"
     if "messages" not in st.session_state:
         st.session_state.messages = st.session_state.chats["Default"]
-    if "chat_input" not in st.session_state:
-        st.session_state.chat_input = ""
 
-init_session_state()  # Call the function before rendering UI
+init_session_state()  # Call before rendering UI
 
 # Sidebar for chat history
 with st.sidebar:
     st.title("Chat History")
-    
+
     for chat_name in st.session_state.chats.keys():
         if st.button(chat_name, key=f"chat_{chat_name}"):
             st.session_state.current_chat = chat_name
@@ -56,7 +53,7 @@ for message in st.session_state.messages:
 # Chat input section with adaptive width
 col1, col2 = st.columns([8, 2])
 with col1:
-    user_input = st.text_area("Type your message:", height=80, key="chat_input")
+    user_input = st.text_area("Type your message:", height=80, key="chat_input", value="", placeholder="Ask me anything...")
 with col2:
     send = st.button("Send", use_container_width=True)
 
@@ -81,8 +78,8 @@ def handle_message():
         st.session_state.messages.append({"role": "assistant", "content": bot_response})
         st.session_state.chats[st.session_state.current_chat] = st.session_state.messages
 
-        # ✅ Clear chat input safely
-        st.session_state["chat_input"] = ""
+        # ✅ Clear chat input safely using JS hack
+        st.experimental_set_query_params(clear_input=True)
         st.rerun()
 
 # ✅ Call function only when send button is clicked
