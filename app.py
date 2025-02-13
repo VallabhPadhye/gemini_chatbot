@@ -6,47 +6,78 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-pro")
 
-# Initialize session state for messages and input
+# Initialize session state
+if "chats" not in st.session_state:
+    st.session_state.chats = {}  # Stores multiple chat sessions
+if "current_chat" not in st.session_state:
+    st.session_state.current_chat = "Default"  # Active chat session
+if "pinned_chat" not in st.session_state:
+    st.session_state.pinned_chat = "Default"  # Pinned chat
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = []  # Chat history
 if "chat_input" not in st.session_state:
     st.session_state.chat_input = ""
 
-# Streamlit UI
-st.title("Secure Chatbot (Powered by Gemini)")
-st.write("Ask me anything!")
+# Load selected chat session
+if st.session_state.current_chat in st.session_state.chats:
+    st.session_state.messages = st.session_state.chats[st.session_state.current_chat]
+else:
+    st.session_state.messages = []
 
-# Display chat history
+# Sidebar for chat history and pinning
+with st.sidebar:
+    st.title("Chat History")
+    for chat_name in st.session_state.chats.keys():
+        if st.button(chat_name, key=f"chat_{chat_name}"):
+            st.session_state.current_chat = chat_name
+            st.session_state.messages = st.session_state.chats[chat_name]
+            st.rerun()
+
+    if st.button("➕ New Chat"):
+        new_chat_name = f"Chat {len(st.session_state.chats) + 1}"
+        st.session_state.chats[new_chat_name] = []
+        st.session_state.current_chat = new_chat_name
+        st.session_state.messages = []
+        st.rerun()
+
+    if st.button("📌 Pin This Chat"):
+        st.session_state.pinned_chat = st.session_state.current_chat
+
+# Display chat messages
+st.title("Secure Chatbot (Powered by Gemini)")
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Chat input box at the bottom with "Send" button
-with st.container():
-    user_input = st.text_area("Type your message:", value=st.session_state.chat_input, height=100)
+# Chat input section with adaptive width
+col1, col2 = st.columns([8, 2])
+with col1:
+    user_input = st.text_area(
+        "Type your message:",
+        value=st.session_state.chat_input,
+        height=80,
+        key="chat_input"
+    )
+with col2:
+    send = st.button("Send", use_container_width=True)
 
-    col1, col2 = st.columns([8, 2])
-    with col1:
-        st.write("")  # Empty space for layout
-    with col2:
-        send = st.button("Send")
-
-# Process input when the "Send" button is clicked
+# Process input when "Send" button is clicked
 if send and user_input.strip():
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # Call Gemini API
+    # Get response from Gemini API
     response = model.generate_content(user_input)
     bot_response = response.text
 
     with st.chat_message("assistant"):
         st.markdown(bot_response)
 
-    # Store chat history
+    # Save chat history
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
+    st.session_state.chats[st.session_state.current_chat] = st.session_state.messages
 
     # Clear input after sending
     st.session_state.chat_input = ""
-    st.rerun()  # Refresh UI to clear text area
+    st.rerun()
