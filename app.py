@@ -6,28 +6,28 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-pro")
 
-# Initialize session state
+# Initialize session state variables
 if "chats" not in st.session_state:
-    st.session_state.chats = {"Default": []}  # Stores multiple chat sessions
+    st.session_state.chats = {"Default": []}
 if "current_chat" not in st.session_state:
-    st.session_state.current_chat = "Default"  # Active chat session
+    st.session_state.current_chat = "Default"
 if "pinned_chat" not in st.session_state:
-    st.session_state.pinned_chat = "Default"  # Pinned chat
+    st.session_state.pinned_chat = "Default"
 if "messages" not in st.session_state:
     st.session_state.messages = st.session_state.chats["Default"]
+if "chat_input" not in st.session_state:
+    st.session_state.chat_input = ""
 
-# Sidebar for chat history and pinning
+# Sidebar for chat history
 with st.sidebar:
     st.title("Chat History")
     
-    # Display available chat sessions
     for chat_name in st.session_state.chats.keys():
         if st.button(chat_name, key=f"chat_{chat_name}"):
             st.session_state.current_chat = chat_name
             st.session_state.messages = st.session_state.chats[chat_name]
             st.rerun()
 
-    # New Chat button
     if st.button("➕ New Chat"):
         new_chat_name = f"Chat {len(st.session_state.chats) + 1}"
         st.session_state.chats[new_chat_name] = []
@@ -35,7 +35,6 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-    # Pin current chat
     if st.button("📌 Pin This Chat"):
         st.session_state.pinned_chat = st.session_state.current_chat
 
@@ -53,11 +52,7 @@ for message in st.session_state.messages:
 # Chat input section with adaptive width
 col1, col2 = st.columns([8, 2])
 with col1:
-    user_input = st.text_area(
-        "Type your message:",
-        height=80,
-        key="chat_input"
-    )
+    user_input = st.text_area("Type your message:", height=80, key="chat_input")
 with col2:
     send = st.button("Send", use_container_width=True)
 
@@ -70,7 +65,7 @@ if send and user_input.strip():
     try:
         response = model.generate_content(user_input)
         bot_response = response.candidates[0].content.parts[0].text  # ✅ Safe extraction
-    except Exception as e:
+    except Exception:
         bot_response = "⚠️ Error getting response from Gemini API."
 
     with st.chat_message("assistant"):
@@ -81,6 +76,6 @@ if send and user_input.strip():
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
     st.session_state.chats[st.session_state.current_chat] = st.session_state.messages
 
-    # Clear input field after sending
-    st.session_state.chat_input = st.empty()  # Clears text area properly
-    st.rerun()  # Refresh UI
+    # ✅ Correct way to clear input
+    st.session_state.chat_input = ""
+    st.rerun()
