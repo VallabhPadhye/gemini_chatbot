@@ -6,21 +6,24 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-pro")
 
+# Initialize session state for messages and input
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "chat_input" not in st.session_state:
+    st.session_state.chat_input = ""
+
 # Streamlit UI
 st.title("Secure Chatbot (Powered by Gemini)")
 st.write("Ask me anything!")
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
 # Display chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Add chat input at the bottom with "Send" button
+# Chat input box at the bottom with "Send" button
 with st.container():
-    user_input = st.text_area("Type your message:", key="chat_input", height=100)
+    user_input = st.text_area("Type your message:", value=st.session_state.chat_input, height=100)
 
     col1, col2 = st.columns([8, 2])
     with col1:
@@ -46,3 +49,4 @@ if send and user_input.strip():
 
     # Clear input after sending
     st.session_state.chat_input = ""
+    st.rerun()  # Refresh UI to clear text area
