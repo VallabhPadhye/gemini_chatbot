@@ -67,8 +67,11 @@ if send and user_input.strip():
         st.markdown(user_input)
 
     # Get response from Gemini API
-    response = model.generate_content(user_input)
-    bot_response = response.text
+    try:
+        response = model.generate_content(user_input)
+        bot_response = response.candidates[0].content.parts[0].text  # ✅ Safe extraction
+    except Exception as e:
+        bot_response = "⚠️ Error getting response from Gemini API."
 
     with st.chat_message("assistant"):
         st.markdown(bot_response)
